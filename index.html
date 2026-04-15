@@ -9,25 +9,27 @@
         .whitespace-pre-line { white-space: pre-line; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen pb-10">
+<body class="bg-slate-100 min-h-screen pb-10 font-sans">
     <div class="p-4 max-w-lg mx-auto">
         <div class="sticky top-0 bg-slate-100 pt-2 pb-4 z-10">
-            <h1 class="text-2xl font-black text-blue-900 mb-3 tracking-tight">SUZUKI 銷售快速查詢</h1>
-            <input type="text" id="q" placeholder="🔍 搜尋車型 (如: Jimny, Carry)..." 
-                class="w-full p-4 rounded-2xl border-none shadow-xl focus:ring-4 focus:ring-blue-400">
+            <h1 class="text-2xl font-black text-blue-900 mb-3 tracking-tight text-center">SUZUKI 銷售快速查詢</h1>
+            <input type="text" id="q" placeholder="🔍 搜尋車型 (如: Jimny, Swift)..." 
+                class="w-full p-4 rounded-2xl border-none shadow-xl focus:ring-4 focus:ring-blue-400 text-lg">
         </div>
         
-        <div id="list" class="space-y-4 mt-2"></div>
+        <div id="list" class="space-y-6 mt-2"></div>
     </div>
 
     <script src="data.js"></script>
     <script>
         const list = document.getElementById('list');
         const q = document.getElementById('q');
+
         function render(filter = '') {
+            // 過濾並顯示卡片
             list.innerHTML = carData.filter(c => c.model.toLowerCase().includes(filter.toLowerCase()))
                 .map(c => `
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden transition-all active:scale-[0.98]">
                     <div class="bg-slate-800 p-4 flex justify-between items-center">
                         <span class="font-bold text-white text-lg">${c.model}</span>
                         <span class="text-xs font-bold bg-blue-500 text-white px-3 py-1 rounded-full">${c.year} 年式</span>
@@ -35,30 +37,40 @@
                     
                     <div class="p-5 space-y-4">
                         <div>
-                            <div class="text-sm text-slate-400 font-bold mb-1">折讓總條件</div>
+                            <div class="text-sm text-slate-400 font-bold mb-1 tracking-widest">折讓總條件</div>
                             <div class="text-3xl font-black text-red-500">$${c.total}</div>
-                            <div class="text-xs text-slate-500 mt-1">${c.detail}</div>
+                            <div class="text-xs text-slate-500 mt-1 italic">${c.detail}</div>
                         </div>
 
-                        <div class="border-t pt-4">
+                        <div class="border-t pt-4 border-slate-100">
                             <div class="flex items-center text-blue-700 font-bold mb-2">
-                                <span class="mr-2">💰</span> 貸款優惠詳情
+                                <span class="mr-2 text-base">💰</span> 貸款優惠詳情
                             </div>
-                            <div class="text-sm text-slate-700 bg-blue-50 p-3 rounded-xl whitespace-pre-line leading-relaxed">${c.loan}</div>
+                            <div class="text-sm text-slate-700 bg-blue-50 p-3 rounded-2xl whitespace-pre-line leading-relaxed border border-blue-100">${c.loan}</div>
                         </div>
 
-                        <div class="border-t pt-4">
-                            <div class="flex items-center text-orange-600 font-bold mb-2">
-                                <span class="mr-2">🎁</span> 本月特別贈品
+                        <div class="border-t pt-4 border-slate-100 text-center">
+                            <div class="flex items-center text-orange-600 font-bold mb-2 justify-start text-left">
+                                <span class="mr-2 text-base">🎁</span> 本月特別贈品
                             </div>
-                            <div class="text-sm text-slate-700 bg-orange-50 p-3 rounded-xl">${c.gift}</div>
+                            <div class="text-sm text-slate-700 bg-orange-50 p-3 rounded-2xl mb-5 text-left border border-orange-100">${c.gift}</div>
+                            
+                            <a href="https://suzuki-inventory-b56w9x7mkpmurucy2uvqvp.streamlit.app/?q=${encodeURIComponent(c.model)}" 
+                               target="_blank"
+                               class="inline-block w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-100 active:bg-emerald-700 hover:bg-emerald-500 transition-colors text-lg">
+                                📊 查看庫存狀況
+                            </a>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
+
+        // 監聽輸入事件
         q.addEventListener('input', (e) => render(e.target.value));
-        render();
+        
+        // 頁面加載完成後初始顯示
+        window.onload = () => render();
     </script>
 </body>
 </html>
