@@ -3,16 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>鈴木銷售查詢</title>
+    <title>SUZUKI 銷售方案查詢</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .whitespace-pre-line { white-space: pre-line; }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="bg-slate-100 min-h-screen pb-10">
     <div class="p-4 max-w-lg mx-auto">
-        <h1 class="text-2xl font-black text-blue-800 mb-4 tracking-tight">SUZUKI 銷售快速查詢</h1>
-        <input type="text" id="q" placeholder="🔍 輸入車型 (如: Jimny, Vitara)..." 
-            class="w-full p-4 rounded-2xl border-none shadow-lg mb-6 focus:ring-4 focus:ring-blue-300">
-        <div id="list" class="space-y-4"></div>
+        <div class="sticky top-0 bg-slate-100 pt-2 pb-4 z-10">
+            <h1 class="text-2xl font-black text-blue-900 mb-3 tracking-tight">SUZUKI 銷售快速查詢</h1>
+            <input type="text" id="q" placeholder="🔍 搜尋車型 (如: Jimny, Carry)..." 
+                class="w-full p-4 rounded-2xl border-none shadow-xl focus:ring-4 focus:ring-blue-400">
+        </div>
+        
+        <div id="list" class="space-y-4 mt-2"></div>
     </div>
+
     <script src="data.js"></script>
     <script>
         const list = document.getElementById('list');
@@ -20,13 +27,33 @@
         function render(filter = '') {
             list.innerHTML = carData.filter(c => c.model.toLowerCase().includes(filter.toLowerCase()))
                 .map(c => `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="font-black text-xl text-slate-800">${c.model}</span>
-                        <span class="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">${c.year}</span>
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-800 p-4 flex justify-between items-center">
+                        <span class="font-bold text-white text-lg">${c.model}</span>
+                        <span class="text-xs font-bold bg-blue-500 text-white px-3 py-1 rounded-full">${c.year} 年式</span>
                     </div>
-                    <div class="text-2xl font-black text-red-500 mb-2">總條件: $${c.total}</div>
-                    <div class="text-sm text-slate-500 bg-slate-50 p-3 rounded-lg border-l-4 border-slate-300">${c.detail}</div>
+                    
+                    <div class="p-5 space-y-4">
+                        <div>
+                            <div class="text-sm text-slate-400 font-bold mb-1">折讓總條件</div>
+                            <div class="text-3xl font-black text-red-500">$${c.total}</div>
+                            <div class="text-xs text-slate-500 mt-1">${c.detail}</div>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <div class="flex items-center text-blue-700 font-bold mb-2">
+                                <span class="mr-2">💰</span> 貸款優惠詳情
+                            </div>
+                            <div class="text-sm text-slate-700 bg-blue-50 p-3 rounded-xl whitespace-pre-line leading-relaxed">${c.loan}</div>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <div class="flex items-center text-orange-600 font-bold mb-2">
+                                <span class="mr-2">🎁</span> 本月特別贈品
+                            </div>
+                            <div class="text-sm text-slate-700 bg-orange-50 p-3 rounded-xl">${c.gift}</div>
+                        </div>
+                    </div>
                 </div>
             `).join('');
         }
