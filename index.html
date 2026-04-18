@@ -31,12 +31,12 @@
                 return;
             }
 
-            // 過濾並顯示卡片
             list.innerHTML = carData.filter(c => c.model.toLowerCase().includes(filter.toLowerCase()))
                 .map(c => {
-                    // 核心修正：抓取車型第一個單字作為搜尋參數，提高庫存表匹配成功率
+                    // 抓取車型第一個單字
                     const searchModel = c.model.split(' ')[0];
-                    const inventoryUrl = `https://suzuki-inventory.streamlit.app/?model=${encodeURIComponent(searchModel)}`;
+                    // 使用你原本確定能開啟的長網址
+                    const inventoryUrl = `https://suzuki-inventory-b56w9x7mkpmurucy2uvqvp.streamlit.app/?model=${encodeURIComponent(searchModel)}`;
 
                     return `
                     <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden transition-all active:scale-[0.98]">
@@ -76,10 +76,7 @@
                 `}).join('');
         }
 
-        // 監聽輸入事件
         q.addEventListener('input', (e) => render(e.target.value));
-        
-        // 頁面加載完成後初始顯示
         window.onload = () => render();
     </script>
 </body>
