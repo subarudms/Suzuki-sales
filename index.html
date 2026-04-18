@@ -58,18 +58,12 @@
                             <a href="https://suzuki-inventory-b56w9x7mkpmurucy2uvqvp.streamlit.app/?model=${encodeURIComponent(c.model)}" 
                                target="_blank"
                                class="inline-block w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-100 active:bg-emerald-700 hover:bg-emerald-500 transition-colors text-lg text-center">
-                                📊 查看 ${c.model} 庫存狀況
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
+                                📊 查看 ${c.model} 庫存狀況<a href="https://suzuki-inventory.streamlit.app/?model=${encodeURIComponent(c.model.split(' ')[0])}" 
+   target="_blank"
+   class="inline-block w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-100 active:bg-emerald-700 hover:bg-emerald-500 transition-colors text-lg text-center">
+    📊 查看 ${c.model} 庫存狀況
+</a>
 
-        // 監聽輸入事件
-        q.addEventListener('input', (e) => render(e.target.value));
-        
-        // 頁面加載完成後初始顯示
         window.onload = () => render();
     </script>
 </body>
