@@ -3,91 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SUZUKI 銷售方案查詢</title>
+    <title>SUZUKI 銷售管理系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .whitespace-pre-line { white-space: pre-line; }
-    </style>
+    <style>.whitespace-pre-line { white-space: pre-line; }</style>
 </head>
-<body class="bg-slate-100 min-h-screen pb-10 font-sans">
-    <div class="p-4 max-w-lg mx-auto">
-        <div class="sticky top-0 bg-slate-100 pt-2 pb-4 z-10">
-            <h1 class="text-2xl font-black text-blue-900 mb-3 tracking-tight text-center">SUZUKI 銷售快速查詢</h1>
-            <input type="text" id="q" placeholder="🔍 搜尋車型 (如: Jimny, Swift)..." 
-                class="w-full p-4 rounded-2xl border-none shadow-xl focus:ring-4 focus:ring-blue-400 text-lg">
+<body class="bg-slate-100 min-h-screen pb-20">
+    <div id="app" class="p-4 max-w-lg mx-auto">
+        <!-- 查詢介面 -->
+        <div id="searchView">
+            <div class="sticky top-0 bg-slate-100 pt-2 pb-4 z-10">
+                <h1 class="text-2xl font-black text-blue-900 mb-3 tracking-tight text-center">SUZUKI 銷售快速查詢</h1>
+                <input type="text" id="q" placeholder="🔍 搜尋車型..." class="w-full p-4 rounded-2xl border-none shadow-xl focus:ring-4 focus:ring-blue-400 text-lg">
+            </div>
+            <div id="list" class="space-y-6 mt-2"></div>
+            <button onclick="showAdmin()" class="mt-20 w-full text-slate-400 text-xs py-4 text-center">—— 管理員登入 ——</button>
         </div>
-        
-        <div id="list" class="space-y-6 mt-2"></div>
+
+        <!-- 管理介面 (預設隱藏) -->
+        <div id="adminView" class="hidden bg-white p-6 rounded-3xl shadow-2xl mt-4">
+            <h2 class="text-xl font-bold mb-4 flex justify-between">
+                資料管理中心
+                <button onclick="hideAdmin()" class="text-slate-400 text-sm">返回</button>
+            </h2>
+            <input type="password" id="githubToken" placeholder="請輸入 GitHub Token" class="w-full p-3 border rounded-xl mb-4 text-sm">
+            <textarea id="dataEditor" class="w-full h-96 font-mono text-xs p-4 bg-slate-50 border rounded-xl mb-4"></textarea>
+            <button id="saveBtn" onclick="saveData()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:bg-blue-800">確認更新並儲存到 GitHub</button>
+            <p id="status" class="mt-2 text-center text-sm font-bold text-blue-600"></p>
+        </div>
     </div>
 
     <script src="data.js"></script>
     <script>
         const list = document.getElementById('list');
         const q = document.getElementById('q');
+        const searchView = document.getElementById('searchView');
+        const adminView = document.getElementById('adminView');
+        const dataEditor = document.getElementById('dataEditor');
+        const status = document.getElementById('status');
 
+        // 初始化顯示
         function render(filter = '') {
-            if (typeof carData === 'undefined') {
-                list.innerHTML = '<div class="text-center p-10 text-slate-400">尚未載入車型資料</div>';
-                return;
-            }
-
             list.innerHTML = carData.filter(c => c.model.toLowerCase().includes(filter.toLowerCase()))
-                .map(c => {
-                    // --- 核心修正：優化關鍵字提取邏輯 ---
-                    let searchModel = c.model.toUpperCase();
-                    
-                    // 1. 處理特別名稱 (例如將 NEW-SWIFT 轉為 SWIFT)
-                    if (searchModel.includes('NEW-SWIFT')) {
-                        searchModel = 'SWIFT';
-                    } 
-                    // 2. 處理 E-VITARA 或其他帶有 "-" 的名稱
-                    else if (searchModel.includes('E-VITARA')) {
-                        searchModel = 'eVITARA';
-                    }
-                    // 3. 一般情況取第一個單字 (例如 JIMNY 2T 取 JIMNY)
-                    else {
-                        searchModel = searchModel.split(' ')[0];
-                    }
-
-                    // 使用確定能開啟的庫存 App 連結
-                    const inventoryUrl = `https://suzuki-inventory-b56w9x7mkpmurucy2uvqvp.streamlit.app/?model=${encodeURIComponent(searchModel)}`;
-
-                    return `
-                    <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden transition-all active:scale-[0.98]">
-                        <div class="bg-slate-800 p-4 flex justify-between items-center">
-                            <span class="font-bold text-white text-lg">${c.model}</span>
-                            <span class="text-xs font-bold bg-blue-500 text-white px-3 py-1 rounded-full">${c.year} 年式</span>
-                        </div>
-                        
-                        <div class="p-5 space-y-4">
-                            <div>
-                                <div class="text-sm text-slate-400 font-bold mb-1 tracking-widest">折讓總條件</div>
-                                <div class="text-3xl font-black text-red-500">$${c.total}</div>
-                                <div class="text-xs text-slate-500 mt-1 italic">${c.detail}</div>
-                            </div>
-
-                            <div class="border-t pt-4 border-slate-100">
-                                <div class="flex items-center text-blue-700 font-bold mb-2">
-                                    <span class="mr-2 text-base">💰</span> 貸款優惠詳情
-                                </div>
-                                <div class="text-sm text-slate-700 bg-blue-50 p-3 rounded-2xl whitespace-pre-line leading-relaxed border border-blue-100">${c.loan}</div>
-                            </div>
-
-                            <div class="border-t pt-4 border-slate-100 text-center">
-                                <div class="flex items-center text-orange-600 font-bold mb-2 justify-start text-left">
-                                    <span class="mr-2 text-base">🎁</span> 本月特別贈品
-                                </div>
-                                <div class="text-sm text-slate-700 bg-orange-50 p-3 rounded-2xl mb-5 text-left border border-orange-100">${c.gift}</div>
-                                
-                                <a href="${inventoryUrl}" 
-                                   target="_blank"
-                                   class="inline-block w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-100 active:bg-emerald-700 hover:bg-emerald-500 transition-colors text-lg text-center">
-                                    📊 查看 ${c.model} 庫存狀況
-                                </a>
-                            </div>
-                        </div>
+                .map(c => `
+                <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden mb-4">
+                    <div class="bg-slate-800 p-4 flex justify-between items-center text-white">
+                        <span class="font-bold">${c.model}</span>
+                        <span class="text-xs bg-blue-500 px-2 py-1 rounded-full">${c.year}</span>
                     </div>
-                `}).join('');
+                    <div class="p-5">
+                        <div class="text-3xl font-black text-red-500 mb-4">$${c.total}</div>
+                        <div class="space-y-3">
+                            <div class="text-sm bg-blue-50 p-3 rounded-xl whitespace-pre-line border border-blue-100"><b>💰 貸款：</b><br>${c.loan}</div>
+                            <div class="text-sm bg-orange-50 p-3 rounded-xl border border-orange-100"><b>🎁 贈品：</b><br>${c.gift}</div>
+                        </div>
+                        <a href="https://suzuki-inventory-b56w9x7mkpmurucy2uvqvp.streamlit.app/?q=${encodeURIComponent(c.model)}" target="_blank"
+                           class="block w-full mt-4 bg-emerald-600 text-white text-center font-bold py-3 rounded-xl shadow-lg">查看庫存狀況</a>
+                    </div>
+                </div>`).join('');
+        }
+
+        // 管理員切換
+        function showAdmin() {
+            searchView.classList.add('hidden');
+            adminView.classList.remove('hidden');
+            dataEditor.value = "const carData = " + JSON.stringify(carData, null, 2) + ";";
+        }
+        function hideAdmin() {
+            adminView.classList.add('hidden');
+            searchView.classList.remove('hidden');
+        }
+
+        // 核心儲存功能 (GitHub API)
+        async function saveData() {
+            const token = document.getElementById('githubToken').value;
+            const content = dataEditor.value;
+            if (!token) return alert('請輸入鑰匙 (Token)');
+            
+            status.innerText = "正在聯絡 GitHub 更新中...";
+            document.getElementById('saveBtn').disabled = true;
+
+            const OWNER = "subarudms"; // 你的 GitHub 帳號
+            const REPO = "suzuki-sales"; // 你的專案名稱
+            const FILE_PATH = "data.js";
+
+            try {
+                // 1. 先取得舊檔案的 SHA
+                const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`);
+                const fileData = await res.json();
+                
+                // 2. 更新檔案
+                const updateRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`, {
+                    method: "PUT",
+                    headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: "透過 App 更新銷售方案",
+                        content: btoa(unescape(encodeURIComponent(content))), // 轉為 Base64
+                        sha: fileData.sha
+                    })
+                });
+
+                if (updateRes.ok) {
+                    status.innerText = "✅ 更新成功！網頁將在 1-2 分鐘內同步。";
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    status.innerText = "❌ 更新失敗，請檢查 Token 權限。";
+                }
+            } catch (err) {
+                status.innerText = "⚠️ 發生錯誤：" + err;
+            } finally {
+                document.getElementById('saveBtn').disabled = false;
+            }
         }
 
         q.addEventListener('input', (e) => render(e.target.value));
