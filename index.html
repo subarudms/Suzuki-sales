@@ -13,9 +13,11 @@
 <body class="bg-slate-100 min-h-screen pb-20 text-slate-800">
     <div id="app" class="p-4 max-w-lg mx-auto">
         
+        <!-- 頂部標題與搜尋列 -->
         <div class="sticky top-0 bg-slate-100 pt-2 pb-4 z-10">
             <div class="flex justify-between items-center mb-3">
                 <h1 class="text-2xl font-black text-blue-900 tracking-tight">SUZUKI 銷售查詢</h1>
+                <!-- 幹部模式狀態標籤 -->
                 <button id="managerStatusBtn" onclick="toggleManagerPrompt()" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-200 text-slate-600 transition-all">
                     🔒 一般業務視角
                 </button>
@@ -24,8 +26,10 @@
                    class="w-full p-4 rounded-2xl border border-slate-200 shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-400 text-lg">
         </div>
 
+        <!-- 錯誤提示區域 -->
         <div id="errorBox" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-2xl mb-4 text-sm font-bold"></div>
 
+        <!-- 主查詢列表 -->
         <div id="searchView">
             <div id="list" class="space-y-6 mt-2">
                 <div class="text-center py-10 text-slate-400 font-bold">資料載入中...</div>
@@ -33,6 +37,7 @@
             <button onclick="showAdmin()" class="mt-16 w-full text-slate-400 text-xs py-4 text-center">—— 管理員/後台登入 ——</button>
         </div>
 
+        <!-- 管理後台介面 (預設隱藏) -->
         <div id="adminView" class="hidden bg-white p-6 rounded-3xl shadow-2xl mt-2 border border-slate-200">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-slate-800">資料管理中心</h2>
@@ -53,13 +58,14 @@
         </div>
     </div>
 
+    <!-- 載入資料庫 -->
     <script src="data.js"></script>
 
     <script>
         // ==========================================
         // 🔑 金鑰與權限設定
         // ==========================================
-        const ADMIN_PIN = "8888"; // 解鎖密碼 (可用於解鎖幹部權限與進入後台)
+        const ADMIN_PIN = "8888"; // 解鎖密碼
         let isManagerUnlocked = false; // 權限狀態開關
 
         // 拆開金鑰避免觸發 GitHub 安全警報
@@ -117,7 +123,15 @@
                     return;
                 }
 
-                list.innerHTML = filtered.map(c => `
+                list.innerHTML = filtered.map(c => {
+                    // 自動過濾/提取超折資訊
+                    let publicDetail = c.detail.replace(/\(所長.*?\)/g, '').replace(/\(經理.*?\)/g, '').replace(/\(.*超折.*\)/g, '').trim();
+                    
+                    // 抓取超折的內容
+                    let managerMatch = c.detail.match(/\((.*?超折.*?)\)/);
+                    let managerText = managerMatch ? managerMatch[1] : '';
+
+                    return `
                     <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden mb-4">
                         <div class="bg-slate-800 p-4 flex justify-between items-center text-white">
                             <span class="font-bold text-lg">${c.model}</span>
@@ -126,12 +140,14 @@
                         <div class="p-5">
                             <div class="text-xs text-slate-400 font-bold mb-1">折讓總條件</div>
                             <div class="text-3xl font-black text-red-500 mb-2">$${c.total}</div>
-                            <div class="text-xs text-slate-500 mb-3">${c.detail}</div>
+                            
+                            <!-- 一般業務只看公開文字 -->
+                            <div class="text-xs text-slate-500 mb-3">${publicDetail}</div>
 
-                            ${isManagerUnlocked ? `
-                                <div class="bg-red-50 border border-red-200 p-3 rounded-2xl mb-4 text-xs font-bold text-red-700 animate-pulse">
-                                    🔑 幹部權限核對：<br>
-                                    ${c.detail.includes('所長') || c.detail.includes('經理') ? c.detail : '本車型依標準條件辦理'}
+                            <!-- 🔒 幹部權限超折區塊 (解鎖後才獨立顯示紅框) -->
+                            ${isManagerUnlocked && managerText ? `
+                                <div class="bg-red-50 border border-red-200 p-3 rounded-2xl mb-4 text-xs font-bold text-red-700">
+                                    🔑 幹部權限核對：<br>${managerText}
                                 </div>
                             ` : ''}
 
@@ -151,7 +167,7 @@
                             </a>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             } catch (err) {
                 showError("渲染發生錯誤: " + err.message);
             }
