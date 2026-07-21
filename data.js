@@ -67,7 +67,7 @@ const carData = [
     "model": "JIMNY",
     "year": "2026",
     "total": "20,000",
-    "detail": "發票 15,000 + 車體險 +5,000",
+    "detail": "發票 15,000 + 車體險 $5,000",
     "loan": "暫無",
     "gift": "試乘贈送TOMYCAR小車"
   }
