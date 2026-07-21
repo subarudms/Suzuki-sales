@@ -1,48 +1,9 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SUZUKI 銷售管理系統</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>.whitespace-pre-line { white-space: pre-line; }</style>
-</head>
-<body class="bg-slate-100 min-h-screen pb-20">
-    <div id="app" class="p-4 max-w-lg mx-auto">
-        <!-- 查詢介面 -->
-        <div id="searchView">
-            <div class="sticky top-0 bg-slate-100 pt-2 pb-4 z-10">
-                <h1 class="text-2xl font-black text-blue-900 mb-3 tracking-tight text-center">SUZUKI 銷售快速查詢</h1>
-                <input type="text" id="q" placeholder="🔍 搜尋車型..." class="w-full p-4 rounded-2xl border-none shadow-xl focus:ring-4 focus:ring-blue-400 text-lg">
-            </div>
-            <div id="list" class="space-y-6 mt-2"></div>
-            <button onclick="showAdmin()" class="mt-20 w-full text-slate-400 text-xs py-4 text-center">—— 管理員登入 ——</button>
-        </div>
-
-        <!-- 管理介面 (預設隱藏) -->
-        <div id="adminView" class="hidden bg-white p-6 rounded-3xl shadow-2xl mt-4">
-            <h2 class="text-xl font-bold mb-4 flex justify-between items-center">
-                資料管理中心
-                <button onclick="hideAdmin()" class="text-slate-400 text-sm font-normal">返回</button>
-            </h2>
-            
-            <!-- 改為數字密碼輸入框 -->
-            <label class="block text-xs font-bold text-slate-500 mb-1">管理員密碼</label>
-            <input type="password" id="adminPassword" placeholder="請輸入4位數字密碼" inputmode="numeric" pattern="[0-9]*" class="w-full p-3 border border-slate-200 rounded-xl mb-4 text-center text-lg font-bold tracking-widest focus:ring-2 focus:ring-blue-500">
-            
-            <label class="block text-xs font-bold text-slate-500 mb-1">銷售資料 JSON</label>
-            <textarea id="dataEditor" class="w-full h-80 font-mono text-xs p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4"></textarea>
-            
-            <button id="saveBtn" onclick="saveData()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:bg-blue-800 transition-all">確認更新並儲存到 GitHub</button>
-            <p id="status" class="mt-3 text-center text-sm font-bold"></p>
-        </div>
-    </div>
-
     <script src="data.js"></script>
-          // ==========================================
+    <script>
+        // ==========================================
         // 🔑 設定區
         // ==========================================
-        const ADMIN_PIN = "8888"; // 你設定的數字密碼
+        const ADMIN_PIN = "8888"; // 管理員密碼
         
         // 拆開 Token 規避 GitHub 安全掃描
         const part1 = "ghp_zKrzMg4KXb8sULZm2dNKtLAZWX";
@@ -54,7 +15,6 @@
         const FILE_PATH = "data.js";
         // ==========================================
 
-
         const list = document.getElementById('list');
         const q = document.getElementById('q');
         const searchView = document.getElementById('searchView');
@@ -62,7 +22,6 @@
         const dataEditor = document.getElementById('dataEditor');
         const status = document.getElementById('status');
 
-        // 初始化顯示
         function render(filter = '') {
             list.innerHTML = carData.filter(c => c.model.toLowerCase().includes(filter.toLowerCase()))
                 .map(c => `
@@ -83,7 +42,6 @@
                 </div>`).join('');
         }
 
-        // 管理員切換
         function showAdmin() {
             searchView.classList.add('hidden');
             adminView.classList.remove('hidden');
@@ -96,40 +54,32 @@
             searchView.classList.remove('hidden');
         }
 
-        // 核心儲存功能 (GitHub API)
         async function saveData() {
-            const inputPin = document.getElementById('adminPassword').value;
+            // 自動去除前後空白
+            const inputPin = document.getElementById('adminPassword').value.trim();
             const content = dataEditor.value;
             
-            // 驗證數字密碼
+            // 密碼驗證
             if (inputPin !== ADMIN_PIN) {
                 status.className = "mt-3 text-center text-sm font-bold text-red-500";
                 status.innerText = "❌ 密碼錯誤，請重新輸入！";
                 return;
             }
 
-            if (!GITHUB_TOKEN || GITHUB_TOKEN === "貼上你的_GITHUB_TOKEN") {
-                status.className = "mt-3 text-center text-sm font-bold text-red-500";
-                status.innerText = "❌ 尚未在程式碼中填入 GitHub Token！";
-                return;
-            }
-            
             status.className = "mt-3 text-center text-sm font-bold text-blue-600";
             status.innerText = "⏳ 正在聯絡 GitHub 更新中...";
             document.getElementById('saveBtn').disabled = true;
 
             try {
-                // 1. 先取得舊檔案的 SHA
                 const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`);
                 const fileData = await res.json();
                 
-                // 2. 更新檔案
                 const updateRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`, {
                     method: "PUT",
                     headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
                     body: JSON.stringify({
                         message: "透過手機 App 更新銷售方案",
-                        content: btoa(unescape(encodeURIComponent(content))), // 轉為 Base64
+                        content: btoa(unescape(encodeURIComponent(content))),
                         sha: fileData.sha
                     })
                 });
@@ -153,5 +103,3 @@
         q.addEventListener('input', (e) => render(e.target.value));
         window.onload = () => render();
     </script>
-</body>
-</html>
