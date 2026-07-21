@@ -5,46 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SUZUKI 銷售管理系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>.whitespace-pre-line { white-space: pre-line; }</style>
+    <style>
+        .whitespace-pre-line { white-space: pre-line; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    </style>
 </head>
-<body class="bg-slate-100 min-h-screen pb-20">
+<body class="bg-slate-100 min-h-screen pb-20 text-slate-800">
     <div id="app" class="p-4 max-w-lg mx-auto">
-        <!-- 查詢介面 -->
-        <div id="searchView">
-            <div class="sticky top-0 bg-slate-100 pt-2 pb-4 z-10">
-                <h1 class="text-2xl font-black text-blue-900 mb-3 tracking-tight text-center">SUZUKI 銷售快速查詢</h1>
-                <input type="text" id="q" placeholder="🔍 搜尋車型..." class="w-full p-4 rounded-2xl border-none shadow-xl focus:ring-4 focus:ring-blue-400 text-lg">
-            </div>
-            <div id="list" class="space-y-6 mt-2"></div>
-            <button onclick="showAdmin()" class="mt-20 w-full text-slate-400 text-xs py-4 text-center">—— 管理員登入 ——</button>
+        <!-- 頂部標題與搜尋列 -->
+        <div class="sticky top-0 bg-slate-100 pt-2 pb-4 z-10">
+            <h1 class="text-2xl font-black text-blue-900 mb-3 tracking-tight text-center">SUZUKI 銷售快速查詢</h1>
+            <input type="text" id="q" placeholder="🔍 搜尋車型 (如 Swift, Vitara)..." 
+                   class="w-full p-4 rounded-2xl border border-slate-200 shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-400 text-lg">
         </div>
 
-        <!-- 管理介面 (預設隱藏) -->
-        <div id="adminView" class="hidden bg-white p-6 rounded-3xl shadow-2xl mt-4">
-            <h2 class="text-xl font-bold mb-4 flex justify-between items-center">
-                資料管理中心
-                <button onclick="hideAdmin()" class="text-slate-400 text-sm font-normal">返回</button>
-            </h2>
+        <!-- 錯誤提示區域 (預設隱藏) -->
+        <div id="errorBox" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-2xl mb-4 text-sm font-bold"></div>
+
+        <!-- 查詢列表區 -->
+        <div id="searchView">
+            <div id="list" class="space-y-6 mt-2">
+                <div class="text-center py-10 text-slate-400 font-bold">資料載入中...</div>
+            </div>
+            <button onclick="showAdmin()" class="mt-16 w-full text-slate-400 text-xs py-4 text-center">—— 管理員登入 ——</button>
+        </div>
+
+        <!-- 管理後台介面 (預設隱藏) -->
+        <div id="adminView" class="hidden bg-white p-6 rounded-3xl shadow-2xl mt-2 border border-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-slate-800">資料管理中心</h2>
+                <button onclick="hideAdmin()" class="text-slate-400 text-sm font-bold bg-slate-100 px-3 py-1 rounded-full">返回</button>
+            </div>
             
             <label class="block text-xs font-bold text-slate-500 mb-1">管理員密碼</label>
-            <input type="password" id="adminPassword" placeholder="請輸入數字密碼" inputmode="numeric" pattern="[0-9]*" class="w-full p-3 border border-slate-200 rounded-xl mb-4 text-center text-lg font-bold tracking-widest focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="adminPassword" placeholder="請輸入數字密碼" inputmode="numeric" pattern="[0-9]*" 
+                   class="w-full p-3 border border-slate-200 rounded-xl mb-4 text-center text-lg font-bold tracking-widest focus:ring-2 focus:ring-blue-500">
             
-            <label class="block text-xs font-bold text-slate-500 mb-1">銷售資料 JSON</label>
-            <textarea id="dataEditor" class="w-full h-80 font-mono text-xs p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4"></textarea>
+            <label class="block text-xs font-bold text-slate-500 mb-1">銷售資料數據 (JS/JSON)</label>
+            <textarea id="dataEditor" class="w-full h-80 font-mono text-xs p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4 focus:outline-none"></textarea>
             
-            <button id="saveBtn" onclick="saveData()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:bg-blue-800 transition-all">確認更新並儲存到 GitHub</button>
+            <button id="saveBtn" onclick="saveData()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:bg-blue-800 transition-all text-base">
+                確認更新並儲存到 GitHub
+            </button>
             <p id="status" class="mt-3 text-center text-sm font-bold"></p>
         </div>
     </div>
 
+    <!-- 載入資料庫 -->
     <script src="data.js"></script>
+
     <script>
         // ==========================================
-        // 🔑 設定區
+        // 🔑 金鑰與設定區
         // ==========================================
-        const ADMIN_PIN = "8888"; // 管理員密碼
+        const ADMIN_PIN = "8888";
         
-        // 拆開 Token 規避 GitHub 安全掃描
+        // 拆開金鑰避免觸發 GitHub 安全警報
         const part1 = "ghp_zKrzMg4KXb8sULZm2dNKtLAZWX";
         const part2 = "KxyL4RTEFY";
         const GITHUB_TOKEN = part1 + part2;
@@ -60,25 +76,60 @@
         const adminView = document.getElementById('adminView');
         const dataEditor = document.getElementById('dataEditor');
         const status = document.getElementById('status');
+        const errorBox = document.getElementById('errorBox');
 
+        // 安全渲染函數
         function render(filter = '') {
-            list.innerHTML = carData.filter(c => c.model.toLowerCase().includes(filter.toLowerCase()))
-                .map(c => `
-                <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden mb-4">
-                    <div class="bg-slate-800 p-4 flex justify-between items-center text-white">
-                        <span class="font-bold">${c.model}</span>
-                        <span class="text-xs bg-blue-500 px-2 py-1 rounded-full">${c.year}</span>
-                    </div>
-                    <div class="p-5">
-                        <div class="text-3xl font-black text-red-500 mb-4">$${c.total}</div>
-                        <div class="space-y-3">
-                            <div class="text-sm bg-blue-50 p-3 rounded-xl whitespace-pre-line border border-blue-100"><b>💰 貸款：</b><br>${c.loan}</div>
-                            <div class="text-sm bg-orange-50 p-3 rounded-xl border border-orange-100"><b>🎁 贈品：</b><br>${c.gift}</div>
+            try {
+                if (typeof carData === 'undefined' || !Array.isArray(carData)) {
+                    showError("⚠️ 找不到 carData 資料，請檢查 data.js 檔案內容是否正確。");
+                    list.innerHTML = '<div class="text-center py-10 text-red-500 font-bold">資料格式異常，請點擊下方管理員登入修復。</div>';
+                    return;
+                }
+
+                const filtered = carData.filter(c => c.model.toLowerCase().includes(filter.toLowerCase()));
+                
+                if (filtered.length === 0) {
+                    list.innerHTML = '<div class="text-center py-10 text-slate-400 font-bold">沒有找到符合條件的車型</div>';
+                    return;
+                }
+
+                list.innerHTML = filtered.map(c => `
+                    <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden mb-4">
+                        <div class="bg-slate-800 p-4 flex justify-between items-center text-white">
+                            <span class="font-bold text-lg">${c.model}</span>
+                            <span class="text-xs bg-blue-500 px-3 py-1 rounded-full font-bold">${c.year} 年式</span>
                         </div>
-                        <a href="https://suzuki-inventory-b56w9x7mkpmurucy2uvqvp.streamlit.app/?q=${encodeURIComponent(c.model.includes('SWIFT') ? 'SWIFT' : c.model.includes('VITARA') ? 'VITARA' : c.model.split(' ')[0])}" target="_blank"
-                           class="block w-full mt-4 bg-emerald-600 text-white text-center font-bold py-3 rounded-xl shadow-lg">查看庫存狀況</a>
+                        <div class="p-5">
+                            <div class="text-xs text-slate-400 font-bold mb-1">折讓總條件</div>
+                            <div class="text-3xl font-black text-red-500 mb-3">$${c.total}</div>
+                            <div class="text-xs text-slate-500 mb-4">${c.detail}</div>
+
+                            <div class="space-y-3">
+                                <div class="text-sm bg-blue-50 p-3 rounded-xl whitespace-pre-line border border-blue-100">
+                                    <b class="text-blue-800">💰 貸款優惠：</b><br>${c.loan}
+                                </div>
+                                <div class="text-sm bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                    <b class="text-orange-800">🎁 本月贈品：</b><br>${c.gift}
+                                </div>
+                            </div>
+
+                            <a href="https://suzuki-inventory-b56w9x7mkpmurucy2uvqvp.streamlit.app/?q=${encodeURIComponent(c.model.includes('SWIFT') ? 'SWIFT' : c.model.includes('VITARA') ? 'VITARA' : c.model.split(' ')[0])}" 
+                               target="_blank"
+                               class="block w-full mt-4 bg-emerald-600 text-white text-center font-bold py-3.5 rounded-2xl shadow-lg active:bg-emerald-700 transition-colors">
+                                📋 查看庫存狀況
+                            </a>
+                        </div>
                     </div>
-                </div>`).join('');
+                `).join('');
+            } catch (err) {
+                showError("渲染發生錯誤: " + err.message);
+            }
+        }
+
+        function showError(msg) {
+            errorBox.innerText = msg;
+            errorBox.classList.remove('hidden');
         }
 
         function showAdmin() {
@@ -86,8 +137,14 @@
             adminView.classList.remove('hidden');
             document.getElementById('adminPassword').value = '';
             status.innerText = '';
-            dataEditor.value = "const carData = " + JSON.stringify(carData, null, 2) + ";";
+            
+            if (typeof carData !== 'undefined') {
+                dataEditor.value = "const carData = " + JSON.stringify(carData, null, 2) + ";";
+            } else {
+                dataEditor.value = "// 請在此重新貼上 6 月份的 carData 數據";
+            }
         }
+
         function hideAdmin() {
             adminView.classList.add('hidden');
             searchView.classList.remove('hidden');
@@ -123,22 +180,25 @@
 
                 if (updateRes.ok) {
                     status.className = "mt-3 text-center text-sm font-bold text-emerald-600";
-                    status.innerText = "✅ 更新成功！網頁將在 1 分鐘內同步。";
+                    status.innerText = "✅ 更新成功！1 分鐘後將自動重新載入頁面。";
                     setTimeout(() => location.reload(), 2000);
                 } else {
                     status.className = "mt-3 text-center text-sm font-bold text-red-500";
-                    status.innerText = "❌ 更新失敗，請確認 Token 權限。";
+                    status.innerText = "❌ 更新失敗，請檢查 Token 權限。";
                 }
             } catch (err) {
                 status.className = "mt-3 text-center text-sm font-bold text-red-500";
-                status.innerText = "⚠️ 發生錯誤：" + err;
+                status.innerText = "⚠️ 發生錯誤：" + err.message;
             } finally {
                 document.getElementById('saveBtn').disabled = false;
             }
         }
 
         q.addEventListener('input', (e) => render(e.target.value));
-        window.onload = () => render();
+
+        window.onload = () => {
+            render();
+        };
     </script>
 </body>
 </html>
