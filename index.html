@@ -1,3 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SUZUKI 銷售管理系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>.whitespace-pre-line { white-space: pre-line; }</style>
+</head>
+<body class="bg-slate-100 min-h-screen pb-20">
+    <div id="app" class="p-4 max-w-lg mx-auto">
+        <!-- 查詢介面 -->
+        <div id="searchView">
+            <div class="sticky top-0 bg-slate-100 pt-2 pb-4 z-10">
+                <h1 class="text-2xl font-black text-blue-900 mb-3 tracking-tight text-center">SUZUKI 銷售快速查詢</h1>
+                <input type="text" id="q" placeholder="🔍 搜尋車型..." class="w-full p-4 rounded-2xl border-none shadow-xl focus:ring-4 focus:ring-blue-400 text-lg">
+            </div>
+            <div id="list" class="space-y-6 mt-2"></div>
+            <button onclick="showAdmin()" class="mt-20 w-full text-slate-400 text-xs py-4 text-center">—— 管理員登入 ——</button>
+        </div>
+
+        <!-- 管理介面 (預設隱藏) -->
+        <div id="adminView" class="hidden bg-white p-6 rounded-3xl shadow-2xl mt-4">
+            <h2 class="text-xl font-bold mb-4 flex justify-between items-center">
+                資料管理中心
+                <button onclick="hideAdmin()" class="text-slate-400 text-sm font-normal">返回</button>
+            </h2>
+            
+            <label class="block text-xs font-bold text-slate-500 mb-1">管理員密碼</label>
+            <input type="password" id="adminPassword" placeholder="請輸入數字密碼" inputmode="numeric" pattern="[0-9]*" class="w-full p-3 border border-slate-200 rounded-xl mb-4 text-center text-lg font-bold tracking-widest focus:ring-2 focus:ring-blue-500">
+            
+            <label class="block text-xs font-bold text-slate-500 mb-1">銷售資料 JSON</label>
+            <textarea id="dataEditor" class="w-full h-80 font-mono text-xs p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4"></textarea>
+            
+            <button id="saveBtn" onclick="saveData()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:bg-blue-800 transition-all">確認更新並儲存到 GitHub</button>
+            <p id="status" class="mt-3 text-center text-sm font-bold"></p>
+        </div>
+    </div>
+
     <script src="data.js"></script>
     <script>
         // ==========================================
@@ -55,11 +94,9 @@
         }
 
         async function saveData() {
-            // 自動去除前後空白
             const inputPin = document.getElementById('adminPassword').value.trim();
             const content = dataEditor.value;
             
-            // 密碼驗證
             if (inputPin !== ADMIN_PIN) {
                 status.className = "mt-3 text-center text-sm font-bold text-red-500";
                 status.innerText = "❌ 密碼錯誤，請重新輸入！";
@@ -103,3 +140,5 @@
         q.addEventListener('input', (e) => render(e.target.value));
         window.onload = () => render();
     </script>
+</body>
+</html>
