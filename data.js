@@ -1,17 +1,10 @@
 const carData = [
   {
-    "model": "VITARA S (Hybrid)",
-    "year": "2026",
-    "total": "60,000",
-    "detail": "發票 $55,000 + 配件 $5,000 (所長超折 $5,000 / 經理超折 $5,000)",
-    "loan": "一般低利貸款專案",
-    "gift": "基礎交車禮"
-  },
-  {
     "model": "VITARA S ALLGRIP (Hybrid)",
     "year": "2026",
     "total": "70,000",
     "detail": "發票 $65,000 + 配件 $5,000 (所長超折 $5,000 / 經理超折 $5,000)",
+    "managerDiscount": "",
     "loan": "一般低利貸款專案",
     "gift": "基礎交車禮"
   },
@@ -20,14 +13,7 @@ const carData = [
     "year": "2026",
     "total": "65,000",
     "detail": "發票 $60,000 + 配件 $5,000 (所長超折 $5,000 / 經理超折 $5,000)",
-    "loan": "一般低利貸款專案",
-    "gift": "基礎交車禮"
-  },
-  {
-    "model": "SX4 GLX ALLGRIP",
-    "year": "2025",
-    "total": "75,000",
-    "detail": "發票 $70,000 + 配件 $5,000 (所長超折 $5,000 / 經理超折 $5,000)",
+    "managerDiscount": "",
     "loan": "一般低利貸款專案",
     "gift": "基礎交車禮"
   },
@@ -36,6 +22,7 @@ const carData = [
     "year": "2026",
     "total": "25,000",
     "detail": "發票 $20,000 + 配件 $5,000 (所長超折 $5,000 / 經理超折 $5,000)",
+    "managerDiscount": "",
     "loan": "電動車專屬貸款方案",
     "gift": "【本月強檔特別加碼】\n本月試乘 e-VITARA 可抽麗星郵輪探索星號雙人豪華遊輪之旅套票 (6天5晚海景雙人房)"
   },
@@ -44,6 +31,7 @@ const carData = [
     "year": "2026",
     "total": "35,000",
     "detail": "發票 $30,000 + 配件 $5,000 (所長超折 $5,000 / 經理超折 $5,000)",
+    "managerDiscount": "",
     "loan": "電動車專屬貸款方案",
     "gift": "【本月強檔特別加碼】\n本月試乘 e-VITARA 可抽麗星郵輪探索星號雙人豪華遊輪之旅套票 (6天5晚海景雙人房)"
   },
@@ -52,14 +40,16 @@ const carData = [
     "year": "2026",
     "total": "40,000",
     "detail": "發票 $35,000 + 配件 $5,000 (所長超折 $5,000 / 經理超折 $5,000)",
+    "managerDiscount": "",
     "loan": "一般低利貸款專案",
-    "gift": "1. 來店賞車送「Care Bears 貼紙乙張」\n2. 試乘即贈「Care Bears 娃娃乙隻」"
+    "gift": "1. 來店賞車送「Care Bears 貼紙乙張」"
   },
   {
     "model": "CARRY",
     "year": "2026",
     "total": "28,000",
     "detail": "發票 $25,000 + 配件 $3,000 (所長超折 $5,000)",
+    "managerDiscount": "",
     "loan": "【分期二選一】\n1. 40萬48期，月付 $8,888\n2. 30萬24期 0% (金鈴補助 $10,000)",
     "gift": "試乘即贈「CARRY 袖套一組」"
   },
@@ -68,6 +58,7 @@ const carData = [
     "year": "2026",
     "total": "20,000",
     "detail": "發票 $15,000 + 車體險 $5,000",
+    "managerDiscount": "",
     "loan": "一般低率貸款",
     "gift": "試乘贈送TOMYCAR小車"
   }
