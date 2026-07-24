@@ -17,9 +17,9 @@
         <div class="sticky top-0 bg-slate-100 pt-2 pb-4 z-10">
             <div class="flex justify-between items-center mb-3">
                 <h1 class="text-2xl font-black text-blue-900 tracking-tight">SUZUKI 銷售查詢</h1>
-                <!-- 幹部視角切換按鈕 -->
-                <button id="managerStatusBtn" onclick="toggleManagerPrompt()" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-200 text-slate-600 transition-all shadow-sm">
-                    🔒 業務視角 (公開條件)
+                <!-- 切換按鈕名稱改為「管理」 -->
+                <button id="managerStatusBtn" onclick="toggleManagerPrompt()" class="text-xs font-bold px-3.5 py-1.5 rounded-full bg-slate-200 text-slate-600 transition-all shadow-sm">
+                    🔒 管理
                 </button>
             </div>
             <input type="text" id="q" placeholder="🔍 搜尋車型 (如 Swift, Vitara)..." 
@@ -37,7 +37,7 @@
             <button onclick="showAdminPrompt()" class="mt-16 w-full text-slate-400 text-xs py-4 text-center">—— 管理員/後台登入 ——</button>
         </div>
 
-        <!-- 直覺化管理後台介面 (預設隱藏，驗證成功後才可見) -->
+        <!-- 後台編輯介面 (預設隱藏) -->
         <div id="adminView" class="hidden bg-white p-6 rounded-3xl shadow-2xl mt-2 border border-slate-200">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-slate-800">表單式資料編輯器</h2>
@@ -65,7 +65,7 @@
         // ==========================================
         // 🔑 金鑰與權限設定
         // ==========================================
-        const ADMIN_PIN = "8888"; // 解鎖密碼 (可用於主管視角解鎖與後台登入)
+        const ADMIN_PIN = "8888"; // 解鎖密碼
         let isManagerUnlocked = false; // 幹部權限開關
 
         const part1 = "ghp_zKrzMg4KXb8sULZm2dNKtLAZWX";
@@ -90,15 +90,15 @@
         function toggleManagerPrompt() {
             if (isManagerUnlocked) {
                 isManagerUnlocked = false;
-                managerStatusBtn.className = "text-xs font-bold px-3 py-1.5 rounded-full bg-slate-200 text-slate-600 transition-all shadow-sm";
-                managerStatusBtn.innerText = "🔒 業務視角 (公開條件)";
+                managerStatusBtn.className = "text-xs font-bold px-3.5 py-1.5 rounded-full bg-slate-200 text-slate-600 transition-all shadow-sm";
+                managerStatusBtn.innerText = "🔒 管理";
                 render(q.value);
             } else {
                 const pin = prompt("🔑 請輸入主管權限解鎖密碼：");
                 if (pin && pin.trim() === ADMIN_PIN) {
                     isManagerUnlocked = true;
-                    managerStatusBtn.className = "text-xs font-bold px-3 py-1.5 rounded-full bg-red-500 text-white shadow-md transition-all";
-                    managerStatusBtn.innerText = "🔓 主管視角 (已解鎖超折)";
+                    managerStatusBtn.className = "text-xs font-bold px-3.5 py-1.5 rounded-full bg-red-500 text-white shadow-md transition-all";
+                    managerStatusBtn.innerText = "🔓 主管視角 (超折已解鎖)";
                     render(q.value);
                 } else if (pin) {
                     alert("❌ 密碼錯誤！無法解鎖主管權限。");
@@ -123,7 +123,13 @@
                 }
 
                 list.innerHTML = filtered.map(c => {
-                    const hasManagerDiscount = c.managerDiscount && c.managerDiscount.trim() !== "";
+                    // 【重點修復】強制濾除括號與後方的「所長超折/經理超折」字樣
+                    let cleanDetail = c.detail ? c.detail.split('(')[0].trim() : '';
+
+                    // 抓取括號內的內容或專屬欄位的幹部超折
+                    let managerContent = c.managerDiscount && c.managerDiscount.trim() !== "" 
+                        ? c.managerDiscount 
+                        : (c.detail && c.detail.includes('(') ? c.detail.substring(c.detail.indexOf('(') + 1, c.detail.lastIndexOf(')')) : '');
 
                     return `
                     <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden mb-4">
@@ -135,22 +141,15 @@
                             <div class="text-xs text-slate-400 font-bold mb-1">折讓總條件</div>
                             <div class="text-3xl font-black text-red-500 mb-2">$${c.total}</div>
                             
-                            <!-- 公開內容 -->
-                            <div class="text-xs text-slate-500 mb-3">${c.detail}</div>
+                            <!-- 業務視角：乾淨無超折文字 -->
+                            <div class="text-xs text-slate-500 mb-3">${cleanDetail}</div>
 
-                            <!-- 🔒 權限動態提示區塊 -->
-                            ${hasManagerDiscount ? (
-                                isManagerUnlocked ? `
-                                    <div class="bg-red-50 border border-red-200 p-3 rounded-2xl mb-4 text-xs font-bold text-red-700">
-                                        🔑 幹部權限核對：<br>${c.managerDiscount}
-                                    </div>
-                                ` : `
-                                    <div class="bg-slate-100 border border-slate-200 p-2.5 rounded-2xl mb-4 text-xs font-bold text-slate-500 flex justify-between items-center">
-                                        <span>🔒 所長/經理超折條件：</span>
-                                        <span class="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md text-[10px]">需主管管理權限</span>
-                                    </div>
-                                `
-                            ) : ''}
+                            <!-- 主管視角：解鎖後才彈出紅色區塊 -->
+                            ${isManagerUnlocked && managerContent ? `
+                                <div class="bg-red-50 border border-red-200 p-3 rounded-2xl mb-4 text-xs font-bold text-red-700">
+                                    🔑 幹部權限核對：<br>${managerContent}
+                                </div>
+                            ` : ''}
 
                             <div class="space-y-3">
                                 <div class="text-sm bg-blue-50 p-3 rounded-xl whitespace-pre-line border border-blue-100">
@@ -179,16 +178,16 @@
             errorBox.classList.remove('hidden');
         }
 
-        // 輸入密碼驗證後進人後台
+        // 輸入密碼後進人後台
         function showAdminPrompt() {
-            const pin = prompt("🔐 請輸入管理員密碼進人後台：");
+            const pin = prompt("🔐 請輸入管理員密碼進入後台：");
             if (pin && pin.trim() === ADMIN_PIN) {
                 searchView.classList.add('hidden');
                 adminView.classList.remove('hidden');
                 status.innerText = '';
                 buildFormFromData();
             } else if (pin) {
-                alert("❌ 密碼錯誤，無法進人管理後台！");
+                alert("❌ 密碼錯誤，無法進入管理後台！");
             }
         }
 
@@ -197,7 +196,7 @@
             searchView.classList.remove('hidden');
         }
 
-        // 建構視覺化編輯表單
+        // 建構表單卡片
         function buildFormFromData() {
             if (typeof carData === 'undefined' || !Array.isArray(carData)) return;
             
@@ -300,7 +299,7 @@
                     method: "PUT",
                     headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        message: "透過表單更新銷售方案與權限設定",
+                        message: "透過表單更新銷售方案",
                         content: btoa(unescape(encodeURIComponent(content))),
                         sha: fileData.sha
                     })
