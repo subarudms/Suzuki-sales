@@ -17,9 +17,9 @@
         <div class="sticky top-0 bg-slate-100 pt-2 pb-4 z-10">
             <div class="flex justify-between items-center mb-3">
                 <h1 class="text-2xl font-black text-blue-900 tracking-tight">SUZUKI 銷售查詢</h1>
-                <!-- 幹部模式狀態標籤 -->
+                <!-- 幹部模式開關按鈕 -->
                 <button id="managerStatusBtn" onclick="toggleManagerPrompt()" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-200 text-slate-600 transition-all">
-                    🔒 管理
+                    🔒 一般業務視角
                 </button>
             </div>
             <input type="text" id="q" placeholder="🔍 搜尋車型 (如 Swift, Vitara)..." 
@@ -37,22 +37,30 @@
             <button onclick="showAdmin()" class="mt-16 w-full text-slate-400 text-xs py-4 text-center">—— 管理員/後台登入 ——</button>
         </div>
 
-        <!-- 管理後台介面 (預設隱藏) -->
+        <!-- 直覺化管理後台介面 (預設隱藏) -->
         <div id="adminView" class="hidden bg-white p-6 rounded-3xl shadow-2xl mt-2 border border-slate-200">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-slate-800">資料管理中心</h2>
+                <h2 class="text-xl font-bold text-slate-800">表單式資料編輯器</h2>
                 <button onclick="hideAdmin()" class="text-slate-400 text-sm font-bold bg-slate-100 px-3 py-1 rounded-full">返回</button>
             </div>
             
-            <label class="block text-xs font-bold text-slate-500 mb-1">管理密碼</label>
-            <input type="password" id="adminPassword" placeholder="請輸入數字密碼" inputmode="numeric" pattern="[0-9]*" 
-                   class="w-full p-3 border border-slate-200 rounded-xl mb-4 text-center text-lg font-bold tracking-widest focus:ring-2 focus:ring-blue-500">
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-slate-500 mb-1">管理員密碼驗證</label>
+                <input type="password" id="adminPassword" placeholder="請輸入數字密碼" inputmode="numeric" pattern="[0-9]*" 
+                       class="w-full p-3 border border-slate-200 rounded-xl text-center text-lg font-bold tracking-widest focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <hr class="my-4 border-slate-200">
+
+            <!-- 動態車型編輯列表區域 -->
+            <div id="editorFormContainer" class="space-y-6 mb-6"></div>
+
+            <button onclick="addCarModelForm()" class="w-full py-3 mb-6 bg-slate-100 text-blue-700 font-bold rounded-2xl border border-dashed border-blue-300 active:bg-blue-50">
+                ➕ 新增一筆車型方案
+            </button>
             
-            <label class="block text-xs font-bold text-slate-500 mb-1">銷售資料數據 (data.js 內容)</label>
-            <textarea id="dataEditor" class="w-full h-80 font-mono text-xs p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4 focus:outline-none"></textarea>
-            
-            <button id="saveBtn" onclick="saveData()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:bg-blue-800 transition-all text-base">
-                確認更新並儲存到 GitHub
+            <button id="saveBtn" onclick="saveDataFromForm()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:bg-blue-800 transition-all text-base">
+                確認更新並同步至 GitHub
             </button>
             <p id="status" class="mt-3 text-center text-sm font-bold"></p>
         </div>
@@ -66,9 +74,8 @@
         // 🔑 金鑰與權限設定
         // ==========================================
         const ADMIN_PIN = "8888"; // 解鎖密碼
-        let isManagerUnlocked = false; // 權限狀態開關
+        let isManagerUnlocked = false; // 權限開關
 
-        // 拆開金鑰避免觸發 GitHub 安全警報
         const part1 = "ghp_zKrzMg4KXb8sULZm2dNKtLAZWX";
         const part2 = "KxyL4RTEFY";
         const GITHUB_TOKEN = part1 + part2;
@@ -82,12 +89,12 @@
         const q = document.getElementById('q');
         const searchView = document.getElementById('searchView');
         const adminView = document.getElementById('adminView');
-        const dataEditor = document.getElementById('dataEditor');
+        const editorFormContainer = document.getElementById('editorFormContainer');
         const status = document.getElementById('status');
         const errorBox = document.getElementById('errorBox');
         const managerStatusBtn = document.getElementById('managerStatusBtn');
 
-        // 切換幹部權限檢視
+        // 切換幹部權限視角
         function toggleManagerPrompt() {
             if (isManagerUnlocked) {
                 isManagerUnlocked = false;
@@ -107,7 +114,7 @@
             }
         }
 
-        // 安全渲染函數
+        // 渲染前台卡片
         function render(filter = '') {
             try {
                 if (typeof carData === 'undefined' || !Array.isArray(carData)) {
@@ -123,15 +130,7 @@
                     return;
                 }
 
-                list.innerHTML = filtered.map(c => {
-                    // 自動過濾/提取超折資訊
-                    let publicDetail = c.detail.replace(/\(所長.*?\)/g, '').replace(/\(經理.*?\)/g, '').replace(/\(.*超折.*\)/g, '').trim();
-                    
-                    // 抓取超折的內容
-                    let managerMatch = c.detail.match(/\((.*?超折.*?)\)/);
-                    let managerText = managerMatch ? managerMatch[1] : '';
-
-                    return `
+                list.innerHTML = filtered.map(c => `
                     <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden mb-4">
                         <div class="bg-slate-800 p-4 flex justify-between items-center text-white">
                             <span class="font-bold text-lg">${c.model}</span>
@@ -141,13 +140,13 @@
                             <div class="text-xs text-slate-400 font-bold mb-1">折讓總條件</div>
                             <div class="text-3xl font-black text-red-500 mb-2">$${c.total}</div>
                             
-                            <!-- 一般業務只看公開文字 -->
-                            <div class="text-xs text-slate-500 mb-3">${publicDetail}</div>
+                            <!-- 公開內容 -->
+                            <div class="text-xs text-slate-500 mb-3">${c.detail}</div>
 
-                            <!-- 🔒 幹部權限超折區塊 (解鎖後才獨立顯示紅框) -->
-                            ${isManagerUnlocked && managerText ? `
+                            <!-- 🔑 幹部權限區塊 -->
+                            ${isManagerUnlocked && c.managerDiscount ? `
                                 <div class="bg-red-50 border border-red-200 p-3 rounded-2xl mb-4 text-xs font-bold text-red-700">
-                                    🔑 幹部權限核對：<br>${managerText}
+                                    🔑 幹部權限核對：<br>${c.managerDiscount}
                                 </div>
                             ` : ''}
 
@@ -167,7 +166,7 @@
                             </a>
                         </div>
                     </div>
-                `}).join('');
+                `).join('');
             } catch (err) {
                 showError("渲染發生錯誤: " + err.message);
             }
@@ -178,14 +177,13 @@
             errorBox.classList.remove('hidden');
         }
 
+        // 開啟管理後台：生成可編輯表單
         function showAdmin() {
             searchView.classList.add('hidden');
             adminView.classList.remove('hidden');
             document.getElementById('adminPassword').value = '';
             status.innerText = '';
-            if (typeof carData !== 'undefined') {
-                dataEditor.value = "const carData = " + JSON.stringify(carData, null, 2) + ";";
-            }
+            buildFormFromData();
         }
 
         function hideAdmin() {
@@ -193,15 +191,105 @@
             searchView.classList.remove('hidden');
         }
 
-        async function saveData() {
+        // 根據 carData 建構直覺的表單卡片
+        function buildFormFromData() {
+            if (typeof carData === 'undefined' || !Array.isArray(carData)) return;
+            
+            editorFormContainer.innerHTML = carData.map((c, index) => `
+                <div class="car-form-item bg-slate-50 border border-slate-200 p-4 rounded-2xl relative" data-index="${index}">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-xs font-black text-blue-900 bg-blue-100 px-2.5 py-1 rounded-lg">車型選項 #${index + 1}</span>
+                        <button onclick="removeCarForm(${index})" class="text-xs text-red-500 font-bold bg-red-50 px-2 py-1 rounded-lg border border-red-200">刪除此車型</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-0.5">車型名稱</label>
+                            <input type="text" value="${c.model || ''}" class="f-model w-full p-2 text-xs font-bold border rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-0.5">年式</label>
+                            <input type="text" value="${c.year || ''}" class="f-year w-full p-2 text-xs font-bold border rounded-lg">
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="block text-[11px] font-bold text-slate-500 mb-0.5">總條件金額 ($)</label>
+                        <input type="text" value="${c.total || ''}" class="f-total w-full p-2 text-xs font-bold border rounded-lg text-red-600">
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="block text-[11px] font-bold text-slate-500 mb-0.5">公開明細 (發票/配件)</label>
+                        <input type="text" value="${c.detail || ''}" class="f-detail w-full p-2 text-xs border rounded-lg">
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="block text-[11px] font-bold text-red-600 mb-0.5">🔑 幹部超折權限 (所長/經理超折)</label>
+                        <input type="text" value="${c.managerDiscount || ''}" placeholder="例如: 所長超折 $5,000 / 經理超折 $5,000" class="f-manager w-full p-2 text-xs border border-red-200 bg-red-50/30 rounded-lg">
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="block text-[11px] font-bold text-slate-500 mb-0.5">貸款優惠內容</label>
+                        <textarea class="f-loan w-full p-2 text-xs border rounded-lg h-16">${c.loan || ''}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 mb-0.5">本月贈品內容</label>
+                        <textarea class="f-gift w-full p-2 text-xs border rounded-lg h-16">${c.gift || ''}</textarea>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 動態新增車型表單
+        function addCarModelForm() {
+            carData.push({
+                model: "NEW MODEL",
+                year: "2026",
+                total: "0",
+                detail: "發票 $0 + 配件 $0",
+                managerDiscount: "",
+                loan: "一般低利貸款專案",
+                gift: "基礎交車禮"
+            });
+            buildFormFromData();
+        }
+
+        // 動態刪除車型表單
+        function removeCarForm(index) {
+            if (confirm("確定要刪除這個車型嗎？")) {
+                carData.splice(index, 1);
+                buildFormFromData();
+            }
+        }
+
+        // 從表單讀取資料並組成 JSON 保存上傳
+        async function saveDataFromForm() {
             const inputPin = document.getElementById('adminPassword').value.trim();
-            const content = dataEditor.value;
             
             if (inputPin !== ADMIN_PIN) {
                 status.className = "mt-3 text-center text-sm font-bold text-red-500";
                 status.innerText = "❌ 密碼錯誤，請重新輸入！";
                 return;
             }
+
+            // 收集所有車型表單數據
+            const formItems = document.querySelectorAll('.car-form-item');
+            const updatedData = [];
+
+            formItems.forEach(item => {
+                updatedData.push({
+                    model: item.querySelector('.f-model').value.trim(),
+                    year: item.querySelector('.f-year').value.trim(),
+                    total: item.querySelector('.f-total').value.trim(),
+                    detail: item.querySelector('.f-detail').value.trim(),
+                    managerDiscount: item.querySelector('.f-manager').value.trim(),
+                    loan: item.querySelector('.f-loan').value.trim(),
+                    gift: item.querySelector('.f-gift').value.trim()
+                });
+            });
+
+            const content = "const carData = " + JSON.stringify(updatedData, null, 2) + ";";
 
             status.className = "mt-3 text-center text-sm font-bold text-blue-600";
             status.innerText = "⏳ 正在聯絡 GitHub 更新中...";
@@ -215,7 +303,7 @@
                     method: "PUT",
                     headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        message: "透過 App 更新銷售方案",
+                        message: "透過視覺化表單更新銷售方案",
                         content: btoa(unescape(encodeURIComponent(content))),
                         sha: fileData.sha
                     })
@@ -224,7 +312,7 @@
                 if (updateRes.ok) {
                     status.className = "mt-3 text-center text-sm font-bold text-emerald-600";
                     status.innerText = "✅ 更新成功！頁面即將重新載入。";
-                    setTimeout(() => location.reload(), 2000);
+                    setTimeout(() => location.reload(), 1500);
                 } else {
                     status.className = "mt-3 text-center text-sm font-bold text-red-500";
                     status.innerText = "❌ 更新失敗，請檢查權限。";
