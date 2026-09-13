@@ -61,5 +61,14 @@ const carData = [
     "managerDiscount": "",
     "loan": "一般低率貸款",
     "gift": "試乘贈送TOMYCAR小車"
+  },
+  {
+    "model": "領牌車CARRY",
+    "year": "2026",
+    "total": "90000",
+    "detail": "發票 $90000 + 配件 $0",
+    "managerDiscount": "所長超折10000",
+    "loan": "一般低利貸款專案",
+    "gift": "基礎交車禮"
   }
 ];
