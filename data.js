@@ -42,7 +42,7 @@ const carData = [
     "detail": "發票 $40,000 + 配件 $5,000",
     "managerDiscount": "所長超折 $5,000 / 經理超折 $5,000",
     "loan": "一般低利貸款專案",
-    "gift": "1. 來店試乘送哈根達斯冰淇淋乙杯"
+    "gift": "1. 來店試乘可獲胖才可愛貼圖"
   },
   {
     "model": "CARRY",
@@ -50,17 +50,17 @@ const carData = [
     "total": "35,000",
     "detail": "發票 $30,000 + 配件 $5,000",
     "managerDiscount": "所長超折 $5,000",
-    "loan": "1. 40萬48期，月付 $8,888\n2.10000元購車金",
+    "loan": "1. 40萬48期，月付 $8,888\n2.10000購車金",
     "gift": "試乘即贈「CARRY 袖套一組」"
   },
   {
     "model": "JIMNY",
     "year": "2026",
-    "total": "20,000",
-    "detail": "發票 $15,000 + 車體險 $5,000",
-    "managerDiscount": "",
+    "total": "35,000",
+    "detail": "發票 $30,000 + 車體險 $5,000",
+    "managerDiscount": "所長5000",
     "loan": "一般低率貸款",
-    "gift": "試乘贈送TOMYCAR小車"
+    "gift": ""
   },
   {
     "model": "領牌車CARRY",
